@@ -16,7 +16,7 @@ export interface PredictionResponse {
 
 export async function predictCar(imageFile: File): Promise<PredictionResponse> {
   const formData = new FormData();
-  formData.append('image', imageFile);
+  formData.append('file', imageFile);
 
   const response = await fetch(`${API_BASE_URL}/api/predict`, {
     method: 'POST',
@@ -24,7 +24,16 @@ export async function predictCar(imageFile: File): Promise<PredictionResponse> {
   });
 
   if (!response.ok) {
-    throw new Error(`Prediction failed: ${response.statusText}`);
+    let errorMessage = `Prediction failed: ${response.statusText}`;
+    try {
+      const errorData = await response.json();
+      if (errorData.detail) {
+        errorMessage = `Prediction failed: ${errorData.detail}`;
+      }
+    } catch {
+      // If response is not JSON, use status text
+    }
+    throw new Error(errorMessage);
   }
 
   return response.json();
